@@ -15,6 +15,7 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "baseUrl": "./",
+        "declaration": true
     },
     "include": [
         "src/**/*",
