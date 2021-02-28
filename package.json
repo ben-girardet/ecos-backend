@@ -1,8 +1,8 @@
 {
-  "name": "prayer-project-server",
+  "name": "ecos-backend",
   "version": "1.0.0",
-  "description": "The server for the Prayer Project",
-  "main": "server.js",
+  "description": "Opinionated framework to quickly create a GraphQL backend for Ecos applications",
+  "main": "dist/index.js",
   "engines": {
     "node": ">14"
   },
