@@ -26,7 +26,7 @@
     "clean-test-app": "rimraf test/dist/*",
     "start-test-app": "node test/dist/test/app/server.js"
   },
-  "author": "Dwayne Charrington",
+  "author": "Ben Girardet",
   "license": "UNLICENCED",
   "dependencies": {
     "@typegoose/auto-increment": "^0.6.0",
