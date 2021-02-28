@@ -1,0 +1,37 @@
+import { prop } from '@typegoose/typegoose';
+import { ObjectType, Field, InputType } from 'type-graphql';
+// TODO: import the type from ecos-types
+
+@ObjectType()
+export class Image {
+
+  @Field(() => String)
+  @prop({index: true})
+  fileId: string;
+
+  @Field(() => Number)
+  @prop()
+  width: number;
+
+  @Field(() => Number)
+  @prop()
+  height: number;
+
+}
+
+@InputType()
+export class ImageInput {
+
+  @Field(() => String)
+  @prop()
+  fileId: string;
+
+  @Field(() => Number)
+  @prop()
+  width: number;
+
+  @Field(() => Number)
+  @prop()
+  height: number;
+
+}

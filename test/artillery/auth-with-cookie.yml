@@ -1,0 +1,83 @@
+config:
+  target: 'http://localhost:3000'
+  environments:
+    dc:
+      target: 'http://app:3000'
+  http:
+    timeout: 10
+  plugins:
+    expect: {outputFormat: 'pretty'}
+  phases:
+    - duration: 1
+      arrivalCount: 1
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  processor: "./processor.js"
+scenarios:
+  - name: "Prepare tokens"
+    flow:
+    - post:
+        name: "Request mobile code"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000001"}) {id, token, expires}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.requestMobileCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+    - post:
+        name: "Validate mobile code"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.validateCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.validateCode.token"
+          - hasProperty: "data.validateCode.refreshToken"
+          - hasProperty: "data.validateCode.refreshTokenExpiry"
+          - hasProperty: "data.validateCode.expires"
+          - hasProperty: "data.validateCode.userId"
+          - hasProperty: "data.validateCode.privateKey"
+          - hasProperty: "data.validateCode.state"
+          - hasProperty: "data.validateCode.token"
+    - post:
+        name: "Refresh token"
+        url: "/graphql"
+        headers:
+            "ecos-params": "abc,include-refresh-token,def"
+            "refresh-token": "{{ refreshToken }}"
+        json:
+            operationName: null
+            query: 'mutation {refreshToken {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.refreshToken.token"
+            as: "token"
+          - json: "$.data.refreshToken.refreshToken"
+            as: "refreshToken"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.refreshToken.token"
+          - hasProperty: "data.refreshToken.refreshToken"
+          - hasProperty: "data.refreshToken.refreshTokenExpiry"
+          - hasProperty: "data.refreshToken.expires"
+          - hasProperty: "data.refreshToken.userId"
+          - hasProperty: "data.refreshToken.privateKey"
+          - hasProperty: "data.refreshToken.state"
+          - hasProperty: "data.refreshToken.token"
+    - function: "logResponse"

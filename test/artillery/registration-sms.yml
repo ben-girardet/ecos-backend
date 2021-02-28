@@ -1,0 +1,107 @@
+config:
+  target: 'http://localhost:3000'
+  environments:
+    dc:
+      target: 'http://app:3000'
+  http:
+    timeout: 10
+  plugins:
+    expect: {outputFormat: 'pretty'}
+  phases:
+    - duration: 1
+      arrivalCount: 1
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  processor: "./processor.js"
+scenarios:
+  - name: "Registration SMS"
+    flow:
+    - post:
+        name: "Request mobile code with extra field requested"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000000"}) {id, token, expires, code}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 400
+          - equals:
+            - "{{ response.errors.0.message}}"
+            - 'Cannot query field "code" on type "Token".'
+    - post:
+        name: "Request mobile code"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000000"}) {id, token, expires}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.requestMobileCode.token"
+            as: "token"
+          - json: "$.data.requestMobileCode.id"
+            as: "tokenId"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.requestMobileCode.id"
+          - hasProperty: "data.requestMobileCode.token"
+          - hasProperty: "data.requestMobileCode.expires"
+    - post:
+        name: "Validate mobile code with wrong code"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "000000"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors.0.message}}"
+            - 'Token not found'
+    - post:
+        name: "Validate mobile code"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.validateCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.validateCode.token"
+          - hasProperty: "data.validateCode.refreshToken"
+          - hasProperty: "data.validateCode.refreshTokenExpiry"
+          - hasProperty: "data.validateCode.expires"
+          - hasProperty: "data.validateCode.userId"
+          - hasProperty: "data.validateCode.privateKey"
+          - hasProperty: "data.validateCode.state"
+          - equals:
+            - "{{ response.data.validateCode.state }}"
+            - 0
+    - post:
+        name: "Validate mobile code with used token"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors.0.message}}"
+            - 'Token not found'

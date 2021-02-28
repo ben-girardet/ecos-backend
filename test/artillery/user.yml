@@ -1,0 +1,369 @@
+config:
+  target: 'http://localhost:3000'
+  environments:
+    dc:
+      target: 'http://app:3000'
+  http:
+    timeout: 10
+  plugins:
+    expect: {outputFormat: 'pretty'}
+  phases:
+    - duration: 1
+      arrivalCount: 1
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  processor: "./processor.js"
+scenarios:
+  - name: "User"
+    flow:
+    - post:
+        name: "Request users as unauthorized"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'query {users(search: "someone") {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - post:
+        name: "Request user as unauthorized"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'query {user(id: "someone") {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - post:
+        name: "Request me as unauthorized"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'query {me {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - post:
+        name: "Request editMe as unauthorized"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {editMe(data: {firstname: "John"}) {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - function: "getTokens"
+    - post:
+        name: "Get me with token1 (John)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token1 }}"
+        json:
+            operationName: null
+            query: 'query {me {id, firstname, lastname, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.me.firstname"
+          - hasProperty: "data.me.lastname"
+          - hasProperty: "data.me.state"
+          - equals:
+            - "{{ response.data.me.firstname }}"
+            - ""
+          - equals:
+            - "{{ response.data.me.lastname }}"
+            - ""
+          - equals:
+            - "{{ response.data.me.state }}"
+            - 0
+    - post:
+        name: "Edit me with token1 (John)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token1 }}"
+        json:
+            operationName: null
+            query: 'mutation {editMe(data: {firstname: "John", lastname: "Stanford"}) {id, firstname, lastname, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.editMe.firstname"
+          - hasProperty: "data.editMe.lastname"
+          - hasProperty: "data.editMe.state"
+          - equals:
+            - "{{ response.data.editMe.firstname }}"
+            - "John"
+          - equals:
+            - "{{ response.data.editMe.lastname }}"
+            - "Stanford"
+          - equals:
+            - "{{ response.data.editMe.state }}"
+            - 1
+    - post:
+        name: "Edit me with token2 (Sandra)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token2 }}"
+        json:
+            operationName: null
+            query: 'mutation {editMe(data: {firstname: "Sandra", lastname: "Tellenbach"}) {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.editMe.firstname"
+          - hasProperty: "data.editMe.lastname"
+    - post:
+        name: "Edit me with token3 (André)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'mutation {editMe(data: {firstname: "André", lastname: "Marchand"}) {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.editMe.firstname"
+          - hasProperty: "data.editMe.lastname"
+    - post:
+        name: "Upload image.jpg"
+        url: "/image"
+        beforeRequest: "uploadImage"
+        formData:
+          file: "binary data"
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.id"
+            as: "jpgImageId"
+        expect:
+        - statusCode: 201
+        - hasProperty: "id"
+    - post:
+        name: "Add profile picture with token3 (André)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'mutation {editMe(data: {picture: [{fileId: "{{ jpgImageId }}", width: 3000, height: 1688 }]}) {id, firstname, lastname, picture {fileId, width, height}}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.editMe.firstname"
+          - hasProperty: "data.editMe.lastname"
+          - hasProperty: "data.editMe.picture"
+          - hasProperty: "data.editMe.picture.0"
+          - hasProperty: "data.editMe.picture.0.fileId"
+          - hasProperty: "data.editMe.picture.0.width"
+          - hasProperty: "data.editMe.picture.0.height"
+          - equals:
+            - "{{ response.data.editMe.firstname }}"
+            - "André"
+          - equals:
+            - "{{ response.data.editMe.lastname }}"
+            - "Marchand"
+          - equals:
+            - "{{ response.data.editMe.picture.length }}"
+            - 1
+          - equals:
+            - "{{ response.data.editMe.picture.0.fileId }}"
+            - "{{ jpgImageId }}"
+          - equals:
+            - "{{ response.data.editMe.picture.0.width }}"
+            - 3000
+          - equals:
+            - "{{ response.data.editMe.picture.0.height }}"
+            - 1688
+    - post:
+        name: "Get my user with token3 (André)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {me {id, firstname, lastname, mobile, email, picture {fileId, width, height}, publicKey, roles, state, player {tags}}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - hasProperty: "data.me.firstname"
+          - hasProperty: "data.me.lastname"
+          - hasProperty: "data.me.email"
+          - hasProperty: "data.me.mobile"
+          - hasProperty: "data.me.picture"
+          - hasProperty: "data.me.picture.0"
+          - hasProperty: "data.me.picture.0.fileId"
+          - hasProperty: "data.me.picture.0.width"
+          - hasProperty: "data.me.picture.0.height"
+          - hasProperty: "data.me.publicKey"
+          - hasProperty: "data.me.roles"
+          - hasProperty: "data.me.roles.0"
+          - hasProperty: "data.me.state"
+          - hasProperty: "data.me.player"
+          - equals:
+            - "{{ response.data.me.firstname }}"
+            - "André"
+          - equals:
+            - "{{ response.data.me.lastname }}"
+            - "Marchand"
+          - equals:
+            - "{{ response.data.me.email }}"
+            - ""
+          - equals:
+            - "{{ response.data.me.mobile }}"
+            - "+41730000003"
+          - equals:
+            - "{{ response.data.me.picture.length }}"
+            - 1
+          - equals:
+            - "{{ response.data.me.picture.0.fileId }}"
+            - "{{ jpgImageId }}"
+          - equals:
+            - "{{ response.data.me.picture.0.width }}"
+            - 3000
+          - equals:
+            - "{{ response.data.me.picture.0.height }}"
+            - 1688
+          - equals:
+            - "{{ response.data.me.roles.length }}"
+            - 1
+          - equals:
+            - "{{ response.data.me.roles.0 }}"
+            - "user"
+          - equals:
+            - "{{ response.data.me.state }}"
+            - 1
+    - post:
+        name: "Request users as authorized"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {users(search: "john") {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.users.0.id"
+            as: "userId1"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.data.users.length }}"
+            - 1
+          - equals:
+            - "{{ response.data.users.0.firstname }}"
+            - "John"
+    - post:
+        name: "Request user as authorized"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {user(id: "{{userId1}}") {id, firstname, lastname}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.data.user.firstname }}"
+            - "John"
+    - post:
+        name: "Request unauthorized property (email)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {users(search: "john") {id, firstname, lastname, email}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - post:
+        name: "Request unauthorized property (state)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {users(search: "john") {id, firstname, lastname, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - post:
+        name: "Request unauthorized property (player)"
+        url: "/graphql"
+        headers:
+            Authorization: "Bearer {{ token3 }}"
+        json:
+            operationName: null
+            query: 'query {users(search: "john") {id, firstname, lastname, player {tags}}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
+          - equals:
+            - "{{ response.errors[0].message }}"
+            - "Access denied! You don't have permission for this action!"
+    - function: "logResponse"

@@ -1,0 +1,98 @@
+config:
+  target: 'http://localhost:3000'
+  environments:
+    dc:
+      target: 'http://app:3000'
+  http:
+    timeout: 10
+  plugins:
+    expect: {outputFormat: 'pretty'}
+  phases:
+    - duration: 1
+      arrivalCount: 1
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  processor: "./processor.js"
+scenarios:
+  - name: "Prepare tokens"
+    flow:
+    - post:
+        name: "Request mobile code (1)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000001"}) {id, token, expires}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.requestMobileCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+    - post:
+        name: "Validate mobile code (1)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.validateCode.token"
+            as: "token1"
+    - post:
+        name: "Request mobile code (2)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000002"}) {id, token, expires}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.requestMobileCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+    - post:
+        name: "Validate mobile code (2)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.validateCode.token"
+            as: "token2"
+    - post:
+        name: "Request mobile code (3)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {requestMobileCode(data: {mobile: "+41730000003"}) {id, token, expires}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.requestMobileCode.token"
+            as: "token"
+        expect:
+          - statusCode: 200
+    - post:
+        name: "Validate mobile code (3)"
+        url: "/graphql"
+        json:
+            operationName: null
+            query: 'mutation {validateCode(data: {token: "{{ token }}", code: "001122"}) {token, refreshToken, refreshTokenExpiry, expires, userId, privateKey, state}}'
+            variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+          - json: "$.data.validateCode.token"
+            as: "token3"
+    - function: "saveTokens"

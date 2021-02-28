@@ -1,0 +1,54 @@
+version: '3.1'
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+        environment:
+            MONGO_HOST: db
+            MONGO_PORT: 27017
+            MONGO_DB: ecostest
+            MONGO_USER: admin
+            MONGO_PASSWORD: admin-test-pwd
+            REDIS_HOST: redis
+            JWT_SECRET_OR_KEY: abcd
+            JWT_REFRESH_TOKEN_SECRET_OR_KEY: defg
+            UPLOAD_PATH: '../uploads/'
+            TEST_NUMBERS: +41730000000,+41730000001,+41730000002,+41730000003,+41730000004,+41730000005,+41730000006,+41730000007,+41730000008,+41730000009
+            TEST_CODES: 001122,001122,001122,001122,001122,001122,001122,001122,001122,001122
+        ports:
+            - '3000:3000'
+        networks:
+            default:
+        command: npm run nodemon
+        volumes:
+            - ..:/home/node/ecos-backend
+            - upload-files:/home/node/uploads
+        depends_on:
+            - db
+            - redis
+    db:
+        image: mongo
+        restart: always
+        ports:
+            - '27117:27017'
+        environment:
+            # MONGO_INITDB_DATABASE: ecostest
+            MONGO_INITDB_ROOT_USERNAME: admin
+            MONGO_INITDB_ROOT_PASSWORD: admin-test-pwd
+        volumes:
+            # - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
+            - mongo-data:/data/db
+    redis:
+        image: 'bitnami/redis:latest'
+        ports:
+            - '6379:6379'
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+        volumes:
+            - redis-data:/var/lib/redis
+volumes:
+    mongo-data:
+    redis-data:
+    upload-files:

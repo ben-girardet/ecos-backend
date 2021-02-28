@@ -1,0 +1,30 @@
+config:
+  target: 'http://localhost:3000'
+  environments:
+    dc:
+      target: 'http://app:3000'
+  http:
+    timeout: 10
+  plugins:
+    expect: {outputFormat: 'pretty'}
+  phases:
+    - duration: 1
+      arrivalCount: 1
+  defaults:
+    headers:
+      Content-Type: "application/json"
+scenarios:
+  - name: "Hello"
+    flow:
+    - post:
+        name: "Hello"
+        url: "/graphql"
+        json:
+          operationName: null
+          query: 'query {hello}'
+          variables: '{}'
+        capture:
+          - json: "$"
+            as: "response"
+        expect:
+          - statusCode: 200
