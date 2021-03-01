@@ -1,3 +1,2 @@
-import { NonEmptyArray } from 'type-graphql';
-declare const resolvers: NonEmptyArray<Function>;
+declare const resolvers: Function[];
 export { resolvers };
