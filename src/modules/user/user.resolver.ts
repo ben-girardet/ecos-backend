@@ -14,10 +14,14 @@ export class UserResolver {
 
   @Authorized(['user'])
   @Query(() => [User])
-  public async users(@Ctx() context: Context, @Arg("search", {nullable: false}) search: string) {
+  public async users(@Ctx() context: Context, @Arg("search", {nullable: true}) search: string) {
     const query: FilterQuery<typeof UserModel> = {};
-    if (search.length < 3) {
-        throw new Error('users query is only allowed for 3+ search word');
+
+    const roles = context.user?.roles || [];
+    if (!roles.includes('admin')) {
+        if (!search || search.length < 3) {
+            throw new Error('users query is only allowed for 3+ search word');
+        }
     }
 
     query.$or = [
