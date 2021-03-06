@@ -189,6 +189,7 @@ const customAuthChecker = ({ root, args, context, info }, roles) => {
     // and check his permission in the db against the `roles` argument
     // that comes from the `@Authorized` decorator, eg. ["ADMIN", "MODERATOR"]
     if (!context.user) {
+        console.log('auth missing user');
         return false;
     }
     if (root && root._id && root._id.toString() === context.user.userId) {
@@ -197,6 +198,7 @@ const customAuthChecker = ({ root, args, context, info }, roles) => {
     if (roles.some(r => context.user.roles.includes(r))) {
         return true;
     }
+    console.log('auth missing required role');
     return false; // or false if access is denied
 };
 exports.customAuthChecker = customAuthChecker;

@@ -162,6 +162,7 @@ export const customAuthChecker: AuthChecker<Context> =
     // that comes from the `@Authorized` decorator, eg. ["ADMIN", "MODERATOR"]
 
     if (!context.user) {
+        console.log('auth missing user');
         return false;
     }
 
@@ -173,5 +174,6 @@ export const customAuthChecker: AuthChecker<Context> =
         return true;
     }
 
+    console.log('auth missing required role');
     return false; // or false if access is denied
 };

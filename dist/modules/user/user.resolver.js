@@ -26,26 +26,31 @@ const push_player_model_1 = require("../push/push-player.model");
 let UserResolver = class UserResolver {
     async users(context, search) {
         var _a;
+        console.log('query users 1');
         const query = {};
         const roles = ((_a = context.user) === null || _a === void 0 ? void 0 : _a.roles) || [];
         if (!roles.includes('admin')) {
+            console.log('query users 2');
             if (!search || search.length < 3) {
                 throw new Error('users query is only allowed for 3+ search word');
             }
         }
-        query.$or = [
-            { email: search },
-            { mobile: search },
-            { firstname: { $regex: `${search}`, $options: 'i' } },
-            { lastname: { $regex: `${search}`, $options: 'i' } }
-        ];
-        for (const countryCode of ['ch']) {
-            const phoneNumber = new awesome_phonenumber_1.default(search, countryCode);
-            if (phoneNumber.isValid()) {
-                query.$or.push({ mobile: phoneNumber.getNumber() });
+        console.log('query users 3');
+        if (search) {
+            query.$or = [
+                { email: search },
+                { mobile: search },
+                { firstname: { $regex: `${search}`, $options: 'i' } },
+                { lastname: { $regex: `${search}`, $options: 'i' } }
+            ];
+            for (const countryCode of ['ch']) {
+                const phoneNumber = new awesome_phonenumber_1.default(search, countryCode);
+                if (phoneNumber.isValid()) {
+                    query.$or.push({ mobile: phoneNumber.getNumber() });
+                }
             }
+            query._id = { $ne: new mongoose_1.default.Types.ObjectId(context.user.userId) };
         }
-        query._id = { $ne: new mongoose_1.default.Types.ObjectId(context.user.userId) };
         const users = await user_model_1.UserModel.find(query);
         const objects = users.map(u => u.toObject());
         return objects;

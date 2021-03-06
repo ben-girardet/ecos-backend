@@ -15,29 +15,34 @@ export class UserResolver {
   @Authorized(['user'])
   @Query(() => [User])
   public async users(@Ctx() context: Context, @Arg("search", {nullable: true}) search: string) {
+    console.log('query users 1');
     const query: FilterQuery<typeof UserModel> = {};
 
     const roles = context.user?.roles || [];
     if (!roles.includes('admin')) {
+        console.log('query users 2');
         if (!search || search.length < 3) {
             throw new Error('users query is only allowed for 3+ search word');
         }
     }
+    console.log('query users 3');
 
-    query.$or = [
-        {email: search},
-        {mobile: search},
-        {firstname: {$regex: `${search}`, $options: 'i'}},
-        {lastname: {$regex: `${search}`, $options: 'i'}}
-    ];
+    if (search) {
+        query.$or = [
+            {email: search},
+            {mobile: search},
+            {firstname: {$regex: `${search}`, $options: 'i'}},
+            {lastname: {$regex: `${search}`, $options: 'i'}}
+        ];
 
-    for (const countryCode of ['ch']) {
-        const phoneNumber = new PhoneNumber( search, countryCode );
-        if (phoneNumber.isValid()) {
-            query.$or.push({mobile: phoneNumber.getNumber()});
+        for (const countryCode of ['ch']) {
+            const phoneNumber = new PhoneNumber( search, countryCode );
+            if (phoneNumber.isValid()) {
+                query.$or.push({mobile: phoneNumber.getNumber()});
+            }
         }
+        query._id = {$ne: new mongoose.Types.ObjectId(context.user.userId)};
     }
-    query._id = {$ne: new mongoose.Types.ObjectId(context.user.userId)};
     const users = await UserModel.find(query);
     const objects = users.map(u => u.toObject());
     return objects;
