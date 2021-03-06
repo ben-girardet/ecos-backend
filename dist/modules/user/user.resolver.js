@@ -25,9 +25,13 @@ const awesome_phonenumber_1 = __importDefault(require("awesome-phonenumber"));
 const push_player_model_1 = require("../push/push-player.model");
 let UserResolver = class UserResolver {
     async users(context, search) {
+        var _a;
         const query = {};
-        if (search.length < 3) {
-            throw new Error('users query is only allowed for 3+ search word');
+        const roles = ((_a = context.user) === null || _a === void 0 ? void 0 : _a.roles) || [];
+        if (!roles.includes('admin')) {
+            if (!search || search.length < 3) {
+                throw new Error('users query is only allowed for 3+ search word');
+            }
         }
         query.$or = [
             { email: search },
@@ -108,7 +112,7 @@ let UserResolver = class UserResolver {
 __decorate([
     type_graphql_1.Authorized(['user']),
     type_graphql_1.Query(() => [user_model_1.User]),
-    __param(0, type_graphql_1.Ctx()), __param(1, type_graphql_1.Arg("search", { nullable: false })),
+    __param(0, type_graphql_1.Ctx()), __param(1, type_graphql_1.Arg("search", { nullable: true })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
