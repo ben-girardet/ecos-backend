@@ -29,7 +29,7 @@ export class EditMeInput {
 @InputType()
 export class EditUserInput {
 
-    @Field({nullable: true})
+    @Field(() => [String], {nullable: true})
     roles?: string[];
 
     @Field({nullable: true})

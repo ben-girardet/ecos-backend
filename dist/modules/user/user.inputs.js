@@ -49,7 +49,7 @@ exports.EditMeInput = EditMeInput;
 let EditUserInput = class EditUserInput {
 };
 __decorate([
-    type_graphql_1.Field({ nullable: true }),
+    type_graphql_1.Field(() => [String], { nullable: true }),
     __metadata("design:type", Array)
 ], EditUserInput.prototype, "roles", void 0);
 __decorate([
