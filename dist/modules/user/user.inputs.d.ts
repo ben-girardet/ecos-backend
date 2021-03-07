@@ -8,3 +8,7 @@ export declare class EditMeInput {
     pushTags?: string[];
     pushActive?: boolean;
 }
+export declare class EditUserInput {
+    roles?: string[];
+    state?: number;
+}

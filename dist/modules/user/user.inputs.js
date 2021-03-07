@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EditMeInput = void 0;
+exports.EditUserInput = exports.EditMeInput = void 0;
 const image_model_1 = require("../image/image.model");
 const type_graphql_1 = require("type-graphql");
 let EditMeInput = class EditMeInput {
@@ -46,3 +46,17 @@ EditMeInput = __decorate([
     type_graphql_1.InputType()
 ], EditMeInput);
 exports.EditMeInput = EditMeInput;
+let EditUserInput = class EditUserInput {
+};
+__decorate([
+    type_graphql_1.Field({ nullable: true }),
+    __metadata("design:type", Array)
+], EditUserInput.prototype, "roles", void 0);
+__decorate([
+    type_graphql_1.Field({ nullable: true }),
+    __metadata("design:type", Number)
+], EditUserInput.prototype, "state", void 0);
+EditUserInput = __decorate([
+    type_graphql_1.InputType()
+], EditUserInput);
+exports.EditUserInput = EditUserInput;

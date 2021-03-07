@@ -111,6 +111,22 @@ let UserResolver = class UserResolver {
         }
         return updatedUserInstance.toObject();
     }
+    async editUser(userId, data) {
+        const user = await user_model_1.UserModel.findById(new mongoose_1.default.Types.ObjectId(userId));
+        if (!user) {
+            throw new Error('User not found');
+        }
+        if (data.roles !== undefined) {
+            user.roles = data.roles;
+        }
+        if (data.state !== undefined) {
+            user.state = data.state;
+        }
+        redis_1.removeModelItem('user', user._id.toString());
+        const updatedUser = await user.save();
+        const updatedUserInstance = new user_model_1.UserModel(updatedUser);
+        return updatedUserInstance.toObject();
+    }
 };
 __decorate([
     type_graphql_1.Authorized(['user']),
@@ -144,6 +160,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, user_inputs_1.EditMeInput]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "editMe", null);
+__decorate([
+    type_graphql_1.Authorized(['admin']),
+    type_graphql_1.Mutation(() => user_model_1.User),
+    __param(0, type_graphql_1.Arg('userId')), __param(1, type_graphql_1.Arg('data')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_inputs_1.EditUserInput]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "editUser", null);
 UserResolver = __decorate([
     type_graphql_1.Resolver()
 ], UserResolver);

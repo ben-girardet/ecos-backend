@@ -25,3 +25,13 @@ export class EditMeInput {
     @Field({nullable: true})
     pushActive?: boolean;
 }
+
+@InputType()
+export class EditUserInput {
+
+    @Field({nullable: true})
+    roles?: string[];
+
+    @Field({nullable: true})
+    state?: number;
+}

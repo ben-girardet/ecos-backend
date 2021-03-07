@@ -4,7 +4,7 @@ import { Resolver, Query, Arg, Ctx, Mutation, Authorized, ObjectType, Field } fr
 import { FilterQuery } from 'mongoose';
 import { Context } from '../../core/context-interface';
 import mongoose from 'mongoose';
-import { EditMeInput } from './user.inputs';
+import { EditMeInput, EditUserInput } from './user.inputs';
 import { removeModelItem } from '../../core/redis';
 import PhoneNumber from 'awesome-phonenumber';
 import { PushPlayerModel } from '../push/push-player.model';
@@ -113,6 +113,28 @@ export class UserResolver {
         }
     }
 
+    return updatedUserInstance.toObject();
+  }
+
+  @Authorized(['admin'])
+  @Mutation(() => User)
+  public async editUser(@Arg('userId') userId: string, @Arg('data') data: EditUserInput) {
+
+    const user = await UserModel.findById(new mongoose.Types.ObjectId(userId));
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (data.roles !== undefined) {
+      user.roles = data.roles;
+    }
+    if (data.state !== undefined) {
+      user.state = data.state;
+    }
+
+    removeModelItem('user', user._id.toString());
+    const updatedUser = await user.save();
+    const updatedUserInstance = new UserModel(updatedUser);
     return updatedUserInstance.toObject();
   }
 }
