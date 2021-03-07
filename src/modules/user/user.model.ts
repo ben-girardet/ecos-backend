@@ -43,7 +43,7 @@ export class User implements IUser {
   @prop()
   public lastname: string;
 
-  @Authorized(['me'])
+  @Authorized(['me', 'admin'])
   @Field(() => String, {nullable: true})
   @prop({index: true})
   public email: string;
@@ -51,7 +51,7 @@ export class User implements IUser {
   @prop()
   public emailValidated?: boolean;
 
-  @Authorized(['me'])
+  @Authorized(['me', 'admin'])
   @Field(() => String)
   @prop({index: true})
   public mobile: string;
@@ -90,7 +90,7 @@ export class User implements IUser {
   // 0 = need to set identity
   // 1 = identity set and active
   // -1 inactive user
-  @Authorized(['me'])
+  @Authorized(['me', 'admin'])
   @Field(() => Number)
   @prop()
   public state = 0;

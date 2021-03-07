@@ -107,7 +107,7 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "lastname", void 0);
 __decorate([
-    type_graphql_1.Authorized(['me']),
+    type_graphql_1.Authorized(['me', 'admin']),
     type_graphql_1.Field(() => String, { nullable: true }),
     typegoose_1.prop({ index: true }),
     __metadata("design:type", String)
@@ -117,7 +117,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], User.prototype, "emailValidated", void 0);
 __decorate([
-    type_graphql_1.Authorized(['me']),
+    type_graphql_1.Authorized(['me', 'admin']),
     type_graphql_1.Field(() => String),
     typegoose_1.prop({ index: true }),
     __metadata("design:type", String)
@@ -163,7 +163,7 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "refreshTokens", void 0);
 __decorate([
-    type_graphql_1.Authorized(['me']),
+    type_graphql_1.Authorized(['me', 'admin']),
     type_graphql_1.Field(() => Number),
     typegoose_1.prop(),
     __metadata("design:type", Object)

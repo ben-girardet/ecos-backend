@@ -26,7 +26,6 @@ const push_player_model_1 = require("../push/push-player.model");
 let UserResolver = class UserResolver {
     async users(context, search) {
         var _a;
-        console.log('query users 1');
         const query = {};
         const roles = ((_a = context.user) === null || _a === void 0 ? void 0 : _a.roles) || [];
         if (!roles.includes('admin')) {
@@ -35,7 +34,6 @@ let UserResolver = class UserResolver {
                 throw new Error('users query is only allowed for 3+ search word');
             }
         }
-        console.log('query users 3');
         if (search) {
             query.$or = [
                 { email: search },

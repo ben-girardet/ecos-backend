@@ -15,7 +15,6 @@ export class UserResolver {
   @Authorized(['user'])
   @Query(() => [User])
   public async users(@Ctx() context: Context, @Arg("search", {nullable: true}) search: string) {
-    console.log('query users 1');
     const query: FilterQuery<typeof UserModel> = {};
 
     const roles = context.user?.roles || [];
@@ -25,7 +24,6 @@ export class UserResolver {
             throw new Error('users query is only allowed for 3+ search word');
         }
     }
-    console.log('query users 3');
 
     if (search) {
         query.$or = [
