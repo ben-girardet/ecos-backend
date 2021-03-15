@@ -23,9 +23,9 @@ export class AuthResolver {
             return true;
         }
         // TODO: compare origin and hostname and detect if they are "same"
-        console.log('isSameSite uncertain => false');
-        console.log('isSameSite', 'origin', origin);
-        console.log('isSameSite', 'hostname', hostname);
+        // console.log('isSameSite uncertain => false');
+        // console.log('isSameSite', 'origin', origin);
+        // console.log('isSameSite', 'hostname', hostname);
         return false;
     }
 

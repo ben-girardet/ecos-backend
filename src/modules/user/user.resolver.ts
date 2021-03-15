@@ -19,7 +19,6 @@ export class UserResolver {
 
     const roles = context.user?.roles || [];
     if (!roles.includes('admin')) {
-        console.log('query users 2');
         if (!search || search.length < 3) {
             throw new Error('users query is only allowed for 3+ search word');
         }
