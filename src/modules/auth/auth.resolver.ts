@@ -93,7 +93,6 @@ export class AuthResolver {
         const checkUser = await UserModel.findById(foundUser._id).select('refreshTokens');
         if (checkUser) {
             const refreshTokens = checkUser.refreshTokens.map(rt => rt.hash);
-            console.log('User has now', refreshToken.length, 'refresh tokens', refreshTokens.map(rt => rt.substr(0, 10) + '...').join(', '));
         }
 
         const jwtString = jwt.sign({userId: foundUser.id, roles: foundUser.roles}, process.env.JWT_SECRET_OR_KEY as string, { expiresIn: process.env.JWT_TOKEN_EXPIRATION, algorithm: 'HS256'});
@@ -113,9 +112,7 @@ export class AuthResolver {
     }
 
     public static sendRefreshToken(context: Context, refreshTokenData: RefreshTokenData,) {
-        console.log('sendRefreshToken', refreshTokenData.refreshToken.substr(0, 10) + '...', refreshTokenData.hash.substr(0, 10) + '...');
         const sameSite: boolean = AuthResolver.isSameSite(context);
-        // console.log('sameSite', sameSite);
 
         context.res.cookie('refreshToken', refreshTokenData.refreshToken, {
             path: '/graphql',
