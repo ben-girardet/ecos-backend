@@ -27,7 +27,7 @@
     "start-test-app": "node test/dist/test/app/server.js"
   },
   "author": "Ben Girardet",
-  "license": "UNLICENCED",
+  "license": "MIT",
   "dependencies": {
     "@typegoose/auto-increment": "^0.6.0",
     "@typegoose/typegoose": "^7.4.8",
