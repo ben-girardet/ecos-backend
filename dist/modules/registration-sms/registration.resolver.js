@@ -28,6 +28,9 @@ const moment_1 = __importDefault(require("moment"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const gun_1 = __importDefault(require("gun"));
 require("gun/sea");
+const smsapi = process.env.SMSAPI_TOKEN !== 'none'
+    ? new smsapicom_1.default({ oauth: { accessToken: process.env.SMSAPI_TOKEN } })
+    : undefined;
 let RegistrationSMSResolver = RegistrationSMSResolver_1 = class RegistrationSMSResolver {
     async requestMobileCode(data) {
         if (!data.mobile) {
@@ -36,9 +39,6 @@ let RegistrationSMSResolver = RegistrationSMSResolver_1 = class RegistrationSMSR
         if (data.mobile.substr(0, 1) !== '+') {
             throw new Error('Mobile must be sent in international format starting with a plus sign');
         }
-        const smsapi = process.env.SMSAPI_TOKEN !== 'none'
-            ? new smsapicom_1.default({ oauth: { accessToken: process.env.SMSAPI_TOKEN } })
-            : undefined;
         const token = new token_model_1.TokenModel();
         token.setToken();
         token.data = data;
@@ -50,18 +50,7 @@ let RegistrationSMSResolver = RegistrationSMSResolver_1 = class RegistrationSMSR
             token.code = TEST_CODES[TEST_INDEX];
         }
         const response = await token.save();
-        if (!smsapi) {
-            console.warn('Missing SMS API token');
-        }
-        if (smsapi && !isTestAccount) {
-            const smsResult = await smsapi.message
-                .sms()
-                //.from(app.name)
-                .from('Info')
-                .to(data.mobile)
-                .message(RegistrationSMSResolver_1.registrationMessage(token.code))
-                .execute(); // return Promise
-        }
+        await RegistrationSMSResolver_1.sendCodeBySMS(token.code, data.mobile, isTestAccount);
         return response.toObject();
     }
     async validateCode(data, context) {
@@ -125,6 +114,23 @@ let RegistrationSMSResolver = RegistrationSMSResolver_1 = class RegistrationSMSR
 };
 RegistrationSMSResolver.registrationMessage = (code) => {
     return `Ecos registration code: ${code}`;
+};
+// by default the service use SMS API
+// but this method can be overriden by consumer application
+// and use another service
+RegistrationSMSResolver.sendCodeBySMS = async (code, mobile, isTestAccount) => {
+    if (!smsapi) {
+        console.warn('Missing SMS API token');
+    }
+    if (smsapi && !isTestAccount) {
+        const smsResult = await smsapi.message
+            .sms()
+            //.from(app.name)
+            .from('Info')
+            .to(mobile)
+            .message(RegistrationSMSResolver_1.registrationMessage(code))
+            .execute(); // return Promise
+    }
 };
 __decorate([
     type_graphql_1.Mutation(() => token_model_1.Token),
