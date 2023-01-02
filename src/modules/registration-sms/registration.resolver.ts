@@ -9,8 +9,12 @@ import SMSAPI from 'smsapicom';
 import moment from 'moment';
 import jwt from 'jsonwebtoken';
 import Gun from 'gun';
-import { Context } from '../../core/context-interface';
+import { Context } from '../../core/context-interface';
 import 'gun/sea';
+
+const smsapi = process.env.SMSAPI_TOKEN !== 'none'
+            ? new SMSAPI({ oauth: { accessToken: process.env.SMSAPI_TOKEN }})
+            : undefined;
 
 interface SeaPair {
     priv: string;
@@ -26,6 +30,25 @@ export class RegistrationSMSResolver {
         return `Ecos registration code: ${code}`;
     }
 
+    // by default the service use SMS API
+    // but this method can be overriden by consumer application
+    // and use another service
+    public static sendCodeBySMS: (code: string, mobile: string, isTestAccount: boolean) => Promise<void> = async (code: string, mobile: string, isTestAccount: boolean) => {
+        if (!smsapi) {
+            console.warn('Missing SMS API token');
+        }
+
+        if (smsapi && !isTestAccount) {
+            const smsResult = await smsapi.message
+                .sms()
+                //.from(app.name)
+                .from('Info')
+                .to(mobile)
+                .message(RegistrationSMSResolver.registrationMessage(code as string))
+                .execute(); // return Promise
+        }
+    }
+
     @Mutation(() => Token)
     public async requestMobileCode(@Arg('data') data: RegisterSMSInput) {
         if (!data.mobile) {
@@ -34,9 +57,7 @@ export class RegistrationSMSResolver {
         if (data.mobile.substr(0, 1) !== '+') {
             throw new Error('Mobile must be sent in international format starting with a plus sign');
         }
-        const smsapi = process.env.SMSAPI_TOKEN !== 'none'
-            ? new SMSAPI({ oauth: { accessToken: process.env.SMSAPI_TOKEN }})
-            : undefined;
+
         const token = new TokenModel();
         token.setToken();
         token.data = data;
@@ -52,19 +73,7 @@ export class RegistrationSMSResolver {
 
         const response = await token.save();
 
-        if (!smsapi) {
-            console.warn('Missing SMS API token');
-        }
-
-        if (smsapi && !isTestAccount) {
-            const smsResult = await smsapi.message
-                .sms()
-                //.from(app.name)
-                .from('Info')
-                .to(data.mobile)
-                .message(RegistrationSMSResolver.registrationMessage(token.code as string))
-                .execute(); // return Promise
-        }
+        await RegistrationSMSResolver.sendCodeBySMS(token.code as string, data.mobile, isTestAccount);
         return response.toObject();
     }
 
@@ -83,8 +92,8 @@ export class RegistrationSMSResolver {
             user = existingUser;
         } else {
             const newUser = new UserModel();
-            newUser.firstname = token.data.firstname || '';
-            newUser.lastname = token.data.lastname || '';
+            newUser.firstname = token.data.firstname || '';
+            newUser.lastname = token.data.lastname || '';
             newUser.email = token.data.email;
             newUser.mobile = token.data.mobile;
             newUser.roles = ['user'];
